@@ -37,11 +37,11 @@ var (
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
-					Content: "Success! " +
+					Content: ":tada: Success! BOT mints a NFT." +
 						"\n```" +
-						"\nJSON IPFS Address: " + jsonCID +
 						"\nNFT Address:       " + nftAddress +
 						"\nNFT Signature:     " + sig +
+						"\nJSON IPFS Address: " + jsonCID +
 						"```",
 					Components: []discordgo.MessageComponent{
 						discordgo.ActionsRow{
@@ -50,7 +50,7 @@ var (
 									Emoji: discordgo.ComponentEmoji{
 										Name: "🔍",
 									},
-									Label: "Show on Solana Explorer",
+									Label: "Check your NFT with Solana Explorer",
 									Style: discordgo.LinkButton,
 									URL: fmt.Sprintf(
 										"https://explorer.solana.com/address/%s?cluster=devnet", nftAddress,

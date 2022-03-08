@@ -38,7 +38,7 @@ func uploadJson2ipfs(imageURI string) (jsonCID string) {
 				"\n  \"name\": \"Super Test NFT\"," +
 				"\n  \"description\": \"Metyakutya Tekitou na NFT no Test.\"," +
 				"\n  \"image\": \"" + imageURI + "\"," +
-				"\n  \"external_url\": \"https://www.github.com/shmn7iii/solana-go-example\"" +
+				"\n  \"external_url\": \"https://www.github.com/shmn7iii/solana-go-sample\"" +
 				"\n}" +
 				""),
 	)
