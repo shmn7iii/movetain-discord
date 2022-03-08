@@ -7,11 +7,11 @@ $ go build
 $ ./solana-go-sample -feepayer xxx -token yyy -guild zzz
 ```
 
-- feepayer  
+- -feepayer  
     FeePayer's base58
-- token  
+- -token  
     Discord BOT's token
-- guild  
+- -guild  
     Guild ID for guild commands
 
 
