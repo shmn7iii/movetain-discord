@@ -15,4 +15,7 @@
 # vendor/
 
 
+.DS_Store
+.idea/**
+bin/
 keypair.json

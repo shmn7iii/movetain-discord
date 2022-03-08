@@ -5,127 +5,47 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
 
-	"github.com/labstack/echo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/portto/solana-go-sdk/client"
-	"github.com/portto/solana-go-sdk/common"
-	"github.com/portto/solana-go-sdk/program/sysprog"
-	"github.com/portto/solana-go-sdk/program/tokenprog"
 	"github.com/portto/solana-go-sdk/rpc"
 	"github.com/portto/solana-go-sdk/types"
 )
 
-// cli flag
 var (
-	FeePayerKeyPairBase58 = flag.String("feepayer", "", "keypair no base 58  *private key no base 58 dato error deru")
-	AliceKeyPairBase58    = flag.String("alice", "", "alice no base 58")
+	FeePayerBase58 = flag.String("feepayer", "", "FeePayer no base58. "+
+		"*keypair no base 58, private key no base 58 dato error deru")
+	BotToken       = flag.String("token", "", "Bot access token")
+	GuildID        = flag.String("guild", "", "Test guild ID. If not passed - bot registers commands globally")
+	RemoveCommands = flag.Bool("rmcmd", true, "Remove all commands after shutdowning or not")
 )
 
-// [global] solana client
 var solanaClient *client.Client
+var discordSession *discordgo.Session
 
-// [global] account
-var feePayerAccount types.Account
-var aliceAccount types.Account
+var feePayer types.Account
 
-func loadFeePayer() {
+func init() {
 	flag.Parse()
-	fe, err := types.AccountFromBase58(*FeePayerKeyPairBase58)
-	if err != nil {
-		log.Fatalf("load fee payer, err: %v", err)
-	}
-	bal, err := solanaClient.GetBalance(context.TODO(), fe.PublicKey.ToBase58())
-	if err != nil {
-		log.Fatalf("load fee payer's balance, err: %v", err)
-	}
-	fmt.Println("💰 Fee payer:", fe.PublicKey.ToBase58())
-	fmt.Println("     balance:", bal)
-	feePayerAccount = fe
-
-	al, err := types.AccountFromBase58(*AliceKeyPairBase58)
-	if err != nil {
-		log.Fatalf("load fee payer, err: %v", err)
-	}
-	bal, err = solanaClient.GetBalance(context.TODO(), al.PublicKey.ToBase58())
-	if err != nil {
-		log.Fatalf("load fee payer's balance, err: %v", err)
-	}
-	fmt.Println("🙋‍♀️ Alice:", al.PublicKey.ToBase58())
-	fmt.Println("  balance:", bal)
-	aliceAccount = al
+	feePayer, _ = types.AccountFromBase58(*FeePayerBase58)
 }
 
-type TokenMintResponse struct {
-	Tx string `json:"Tx"`
-}
-
-func mint(c echo.Context) error {
-
-	// get init balance
-	rentExemptionBalance, err := solanaClient.GetMinimumBalanceForRentExemption(
-		context.Background(),
-		tokenprog.MintAccountSize,
-	)
+// discord session
+func init() {
+	// open discord session
+	var err error
+	discordSession, err = discordgo.New("Bot " + *BotToken)
 	if err != nil {
-		log.Fatalf("get min balacne for rent exemption, err: %v", err)
+		log.Fatalf("[Discord] Invalid bot parameters: %v", err)
 	}
-
-	// create accounts
-	mintAccount := types.NewAccount()
-	fmt.Println("mint:", mintAccount.PublicKey.ToBase58())
-
-	// //air drop
-	// airdrop_txhash, err := solanaClient.RequestAirdrop(
-	// 	context.Background(),
-	// 	feePayerAccount.PublicKey.ToBase58(),
-	// 	1e9, // 1 SOL = 10^9 lamports
-	// )
-	// if err != nil {
-	// 	log.Fatalf("air drop error, err: %v\n", err)
-	// }
-
-	// get blockhash
-	res, err := solanaClient.GetRecentBlockhash(context.Background())
-	if err != nil {
-		log.Fatalf("get recent block hash error, err: %v\n", err)
-	}
-
-	// create transaction
-	tx, err := types.NewTransaction(types.NewTransactionParam{
-		Message: types.NewMessage(types.NewMessageParam{
-			FeePayer:        mintAccount.PublicKey,
-			RecentBlockhash: res.Blockhash,
-			Instructions: []types.Instruction{
-				sysprog.CreateAccount(sysprog.CreateAccountParam{
-					From:     feePayerAccount.PublicKey,
-					New:      mintAccount.PublicKey,
-					Owner:    common.TokenProgramID,
-					Lamports: rentExemptionBalance,
-					Space:    tokenprog.MintAccountSize,
-				}),
-				tokenprog.InitializeMint(tokenprog.InitializeMintParam{
-					Decimals:   8,
-					Mint:       mintAccount.PublicKey,
-					MintAuth:   aliceAccount.PublicKey,
-					FreezeAuth: nil,
-				}),
-			},
-		}),
-		Signers: []types.Account{feePayerAccount, mintAccount},
+	// add command handlers
+	discordSession.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+			h(s, i)
+		}
 	})
-	if err != nil {
-		log.Fatalf("generate tx error, err: %v\n", err)
-	}
-
-	txhash, err := solanaClient.SendTransaction(context.Background(), tx)
-	if err != nil {
-		log.Fatalf("send tx error, err: %v\n", err)
-	}
-
-	response := new(TokenMintResponse)
-	response.Tx = txhash
-	return c.JSON(http.StatusOK, res)
 }
 
 func main() {
@@ -133,18 +53,44 @@ func main() {
 	solanaClient = client.NewClient(rpc.DevnetRPCEndpoint)
 	resp, err := solanaClient.GetVersion(context.TODO())
 	if err != nil {
-		log.Fatalf("failed to version info, err: %v", err)
+		log.Fatalf("[Solana] Failed to version info, err: %v", err)
 	}
-	fmt.Println("\n🎉 Solana client has launched. version", resp.SolanaCore)
-	// load fee payer
-	loadFeePayer()
+	fmt.Println("\n[Solana] 🎉 Solana client has launched. version", resp.SolanaCore)
 
-	// echo
-	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+	// discord
+	discordSession.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+		fmt.Println("[Discord] 🥳 Logged in as ", s.State.User.Username)
 	})
-	e.GET("/mint", mint)
-	e.Logger.Fatal(e.Start(":1323"))
-
+	err = discordSession.Open()
+	if err != nil {
+		log.Fatalf("[Discord] Cannot open the session: %v", err)
+	}
+	// add commands
+	log.Println("[Discord] Adding commands...")
+	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
+	for i, v := range commands {
+		cmd, err := discordSession.ApplicationCommandCreate(discordSession.State.User.ID, *GuildID, v)
+		if err != nil {
+			log.Panicf("[Discord] Cannot create '%v' command: %v", v.Name, err)
+		}
+		registeredCommands[i] = cmd
+	}
+	// defer close
+	defer discordSession.Close()
+	// stop
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+	log.Println("[Discord] Press Ctrl+C to exit")
+	<-stop
+	fmt.Println("[Discord] 👋 bye bye.")
+	// remove commands
+	if *RemoveCommands {
+		log.Println("[Discord] Removing commands...")
+		for _, v := range registeredCommands {
+			err := discordSession.ApplicationCommandDelete(discordSession.State.User.ID, *GuildID, v.ID)
+			if err != nil {
+				log.Panicf("[Discord] Cannot delete '%v' command: %v", v.Name, err)
+			}
+		}
+	}
 }

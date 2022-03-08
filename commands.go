@@ -1,0 +1,69 @@
+package main
+
+import (
+	"fmt"
+	"github.com/bwmarrin/discordgo"
+)
+
+// var nftAddress = "BKxCq9Q9nezwuQZvoe6oubcyr4w8F9NWgsAugpY71And"
+
+var (
+	commands = []*discordgo.ApplicationCommand{
+		{
+			Name:        "mint",
+			Description: "Mint a NFT",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "image",
+					Description: "Image URL",
+					Required:    true,
+				},
+			},
+		},
+	}
+
+	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"mint": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
+			imageURL := i.ApplicationCommandData().Options[0].StringValue()
+			jsonCID := uploadJson2ipfs(imageURL)
+			nftAddress, sig := mint(jsonCID)
+
+			// if arg[0] == ipfs://
+			// else if http:// or https://
+			// else error
+
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Success! " +
+						"\n```" +
+						"\nJSON IPFS Address: " + jsonCID +
+						"\nNFT Address:       " + nftAddress +
+						"\nNFT Signature:     " + sig +
+						"```",
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.Button{
+									Emoji: discordgo.ComponentEmoji{
+										Name: "🔍",
+									},
+									Label: "Show on Solana Explorer",
+									Style: discordgo.LinkButton,
+									URL: fmt.Sprintf(
+										"https://explorer.solana.com/address/%s?cluster=devnet", nftAddress,
+									),
+								},
+							},
+						},
+					},
+				},
+			})
+			if err != nil {
+				panic(err)
+			}
+		},
+	}
+)
