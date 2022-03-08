@@ -25,3 +25,5 @@ $ ./solana-go-sample -feepayer xxx -token yyy -guild zzz
 2. Then, BOT uploads JSON which include image URL to IPFS.
 3. BOT mints a NFT.
 4. Complete. You can check your NFT on Solana Explorer, and so on.
+
+＊ **YOUR METAPLEX JSON is stored on IPFS, but YOUR IMAGE is not.**
