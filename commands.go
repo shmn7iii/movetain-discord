@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -17,6 +18,18 @@ var (
 					Type:        discordgo.ApplicationCommandOptionString,
 					Name:        "image",
 					Description: "Image URL",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Name:        "memo",
+			Description: "Create memo transaction",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "content",
+					Description: "Memmo content",
 					Required:    true,
 				},
 			},
@@ -54,6 +67,40 @@ var (
 									Style: discordgo.LinkButton,
 									URL: fmt.Sprintf(
 										"https://explorer.solana.com/address/%s?cluster=devnet", nftAddress,
+									),
+								},
+							},
+						},
+					},
+				},
+			})
+			if err != nil {
+				panic(err)
+			}
+		},
+		"memo": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
+			content := i.ApplicationCommandData().Options[0].StringValue()
+			txAddress := memo(content)
+
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: ":tada: Success! BOT Create a memo transaction." +
+						"\n```" +
+						"\nTransaction Address:       " + txAddress +
+						"```",
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{
+							Components: []discordgo.MessageComponent{
+								discordgo.Button{
+									Emoji: discordgo.ComponentEmoji{
+										Name: "🔍",
+									},
+									Label: "Check your Transaction with Solana Explorer",
+									Style: discordgo.LinkButton,
+									URL: fmt.Sprintf(
+										"https://explorer.solana.com/tx/%s?cluster=devnet", txAddress,
 									),
 								},
 							},

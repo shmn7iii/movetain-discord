@@ -55,11 +55,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("[Solana] Failed to version info, err: %v", err)
 	}
-	fmt.Println("\n[Solana] 🎉 Solana client has launched. version", resp.SolanaCore)
+	log.Println("\n[Solana] 🎉 Solana client has launched. version", resp.SolanaCore)
 
 	// discord
 	discordSession.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		fmt.Println("[Discord] 🥳 Logged in as ", s.State.User.Username)
+		log.Println("[Discord] 🥳 Logged in as ", s.State.User.Username)
 	})
 	err = discordSession.Open()
 	if err != nil {
