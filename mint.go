@@ -116,5 +116,9 @@ func mint(jsonCID string) (nftAddress, sig string) {
 		log.Fatalf("failed to send tx, err: %v", err)
 	}
 
+	log.Println("[Solana ] 🪪 BOT has minted a NFT")
+	log.Println("[Solana ]      Account:  ", nftAddress)
+	log.Println("[Solana ]      Signature:", sig)
+
 	return
 }

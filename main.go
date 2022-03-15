@@ -53,20 +53,20 @@ func main() {
 	solanaClient = client.NewClient(rpc.DevnetRPCEndpoint)
 	resp, err := solanaClient.GetVersion(context.TODO())
 	if err != nil {
-		log.Fatalf("[Solana] Failed to version info, err: %v", err)
+		log.Fatalf("[Solana ] Failed to version info, err: %v", err)
 	}
-	log.Println("\n[Solana] 🎉 Solana client has launched. version", resp.SolanaCore)
+	log.Println("[Solana ] 🎉 Solana client has launched. version", resp.SolanaCore)
 
 	// discord
 	discordSession.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Println("[Discord] 🥳 Logged in as ", s.State.User.Username)
+		log.Println("[Discord] 🥳 Logged in as", s.State.User.Username)
 	})
 	err = discordSession.Open()
 	if err != nil {
 		log.Fatalf("[Discord] Cannot open the session: %v", err)
 	}
 	// add commands
-	log.Println("[Discord] Adding commands...")
+	log.Println("[Discord] 🔨 Adding commands...")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 	for i, v := range commands {
 		cmd, err := discordSession.ApplicationCommandCreate(discordSession.State.User.ID, *GuildID, v)
@@ -80,7 +80,6 @@ func main() {
 	// stop
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	log.Println("[Discord] Press Ctrl+C to exit")
 	<-stop
 	fmt.Println("[Discord] 👋 bye bye.")
 	// remove commands

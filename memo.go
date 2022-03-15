@@ -41,5 +41,8 @@ func memo(content string) string {
 		log.Fatalf("failed to send tx, err: %v", err)
 	}
 
+	log.Println("[Solana ] 🧱 BOT has created a transaction")
+	log.Println("[Solana ]      Tx Hash:", txhash)
+
 	return txhash
 }

@@ -88,7 +88,7 @@ var (
 				Data: &discordgo.InteractionResponseData{
 					Content: ":tada: Success! BOT Create a memo transaction." +
 						"\n```" +
-						"\nTransaction Address:       " + txAddress +
+						"\nTransaction Address: " + txAddress +
 						"```",
 					Components: []discordgo.MessageComponent{
 						discordgo.ActionsRow{
