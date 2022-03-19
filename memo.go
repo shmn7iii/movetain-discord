@@ -11,21 +11,21 @@ import (
 
 func memo(content string) string {
 	// fetch recent blockhash
-	recentBlockhashResponse, err := solanaClient.GetRecentBlockhash(context.Background())
+	recentBlockhashResponse, err := SOLANA_CLIENT.GetRecentBlockhash(context.Background())
 	if err != nil {
 		log.Fatalf("failed to get recent blockhash, err: %v", err)
 	}
 
 	// create a tx
 	tx, err := types.NewTransaction(types.NewTransactionParam{
-		Signers: []types.Account{feePayer, feePayer},
+		Signers: []types.Account{FEE_PAYER, FEE_PAYER},
 		Message: types.NewMessage(types.NewMessageParam{
-			FeePayer:        feePayer.PublicKey,
+			FeePayer:        FEE_PAYER.PublicKey,
 			RecentBlockhash: recentBlockhashResponse.Blockhash,
 			Instructions: []types.Instruction{
 				// memo instruction
 				memoprog.BuildMemo(memoprog.BuildMemoParam{
-					SignerPubkeys: []common.PublicKey{feePayer.PublicKey},
+					SignerPubkeys: []common.PublicKey{FEE_PAYER.PublicKey},
 					Memo:          []byte(content),
 				}),
 			},
@@ -36,7 +36,7 @@ func memo(content string) string {
 	}
 
 	// send tx
-	txhash, err := solanaClient.SendTransaction(context.Background(), tx)
+	txhash, err := SOLANA_CLIENT.SendTransaction(context.Background(), tx)
 	if err != nil {
 		log.Fatalf("failed to send tx, err: %v", err)
 	}

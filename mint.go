@@ -17,7 +17,7 @@ func mint(jsonCID string) (nftAddress, sig string) {
 	mint := types.NewAccount()
 	nftAddress = mint.PublicKey.ToBase58()
 
-	ata, _, err := common.FindAssociatedTokenAddress(feePayer.PublicKey, mint.PublicKey)
+	ata, _, err := common.FindAssociatedTokenAddress(FEE_PAYER.PublicKey, mint.PublicKey)
 	if err != nil {
 		log.Fatalf("failed to find a valid ata, err: %v", err)
 	}
@@ -33,24 +33,24 @@ func mint(jsonCID string) (nftAddress, sig string) {
 		log.Fatalf("failed to find a valid master edition, err: %v", err)
 	}
 
-	mintAccountRent, err := solanaClient.GetMinimumBalanceForRentExemption(context.Background(), tokenprog.MintAccountSize)
+	mintAccountRent, err := SOLANA_CLIENT.GetMinimumBalanceForRentExemption(context.Background(), tokenprog.MintAccountSize)
 	if err != nil {
 		log.Fatalf("failed to get mint account rent, err: %v", err)
 	}
 
-	recentBlockhashResponse, err := solanaClient.GetRecentBlockhash(context.Background())
+	recentBlockhashResponse, err := SOLANA_CLIENT.GetRecentBlockhash(context.Background())
 	if err != nil {
 		log.Fatalf("failed to get recent blockhash, err: %v", err)
 	}
 
 	tx, err := types.NewTransaction(types.NewTransactionParam{
-		Signers: []types.Account{mint, feePayer},
+		Signers: []types.Account{mint, FEE_PAYER},
 		Message: types.NewMessage(types.NewMessageParam{
-			FeePayer:        feePayer.PublicKey,
+			FeePayer:        FEE_PAYER.PublicKey,
 			RecentBlockhash: recentBlockhashResponse.Blockhash,
 			Instructions: []types.Instruction{
 				sysprog.CreateAccount(sysprog.CreateAccountParam{
-					From:     feePayer.PublicKey,
+					From:     FEE_PAYER.PublicKey,
 					New:      mint.PublicKey,
 					Owner:    common.TokenProgramID,
 					Lamports: mintAccountRent,
@@ -59,14 +59,14 @@ func mint(jsonCID string) (nftAddress, sig string) {
 				tokenprog.InitializeMint(tokenprog.InitializeMintParam{
 					Decimals: 0,
 					Mint:     mint.PublicKey,
-					MintAuth: feePayer.PublicKey,
+					MintAuth: FEE_PAYER.PublicKey,
 				}),
 				tokenmeta.CreateMetadataAccount(tokenmeta.CreateMetadataAccountParam{
 					Metadata:                tokenMetadataPubkey,
 					Mint:                    mint.PublicKey,
-					MintAuthority:           feePayer.PublicKey,
-					Payer:                   feePayer.PublicKey,
-					UpdateAuthority:         feePayer.PublicKey,
+					MintAuthority:           FEE_PAYER.PublicKey,
+					Payer:                   FEE_PAYER.PublicKey,
+					UpdateAuthority:         FEE_PAYER.PublicKey,
 					UpdateAuthorityIsSigner: true,
 					IsMutable:               true,
 					MintData: tokenmeta.Data{
@@ -76,7 +76,7 @@ func mint(jsonCID string) (nftAddress, sig string) {
 						SellerFeeBasisPoints: 100,
 						Creators: &[]tokenmeta.Creator{
 							{
-								Address:  feePayer.PublicKey,
+								Address:  FEE_PAYER.PublicKey,
 								Verified: true,
 								Share:    100,
 							},
@@ -84,24 +84,24 @@ func mint(jsonCID string) (nftAddress, sig string) {
 					},
 				}),
 				assotokenprog.CreateAssociatedTokenAccount(assotokenprog.CreateAssociatedTokenAccountParam{
-					Funder:                 feePayer.PublicKey,
-					Owner:                  feePayer.PublicKey,
+					Funder:                 FEE_PAYER.PublicKey,
+					Owner:                  FEE_PAYER.PublicKey,
 					Mint:                   mint.PublicKey,
 					AssociatedTokenAccount: ata,
 				}),
 				tokenprog.MintTo(tokenprog.MintToParam{
 					Mint:   mint.PublicKey,
 					To:     ata,
-					Auth:   feePayer.PublicKey,
+					Auth:   FEE_PAYER.PublicKey,
 					Amount: 1,
 				}),
 				tokenmeta.CreateMasterEdition(tokenmeta.CreateMasterEditionParam{
 					Edition:         tokenMasterEditionPubkey,
 					Mint:            mint.PublicKey,
-					UpdateAuthority: feePayer.PublicKey,
-					MintAuthority:   feePayer.PublicKey,
+					UpdateAuthority: FEE_PAYER.PublicKey,
+					MintAuthority:   FEE_PAYER.PublicKey,
 					Metadata:        tokenMetadataPubkey,
-					Payer:           feePayer.PublicKey,
+					Payer:           FEE_PAYER.PublicKey,
 					MaxSupply:       pointer.Uint64(0),
 				}),
 			},
@@ -111,7 +111,7 @@ func mint(jsonCID string) (nftAddress, sig string) {
 		log.Fatalf("failed to new a tx, err: %v", err)
 	}
 
-	sig, err = solanaClient.SendTransaction(context.Background(), tx)
+	sig, err = SOLANA_CLIENT.SendTransaction(context.Background(), tx)
 	if err != nil {
 		log.Fatalf("failed to send tx, err: %v", err)
 	}
