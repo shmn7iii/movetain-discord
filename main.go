@@ -11,6 +11,7 @@ import (
 	"os/signal"
 
 	"github.com/bwmarrin/discordgo"
+	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/portto/solana-go-sdk/client"
 	"github.com/portto/solana-go-sdk/rpc"
 	"github.com/portto/solana-go-sdk/types"
@@ -20,6 +21,7 @@ var (
 	JSON_KEYS      jsonKeys
 	SOLANA_CLIENT  *client.Client
 	DISCORD_CLIENT *discordgo.Session
+	IPFS_SHELL     *shell.Shell
 	FEE_PAYER      types.Account
 
 	RemoveCommands = flag.Bool("rmcmd", true, "Remove all commands after shutdowning or not")
@@ -43,6 +45,10 @@ func init() {
 	json.Unmarshal(raw, &JSON_KEYS)
 
 	FEE_PAYER, _ = types.AccountFromBase58(JSON_KEYS.FeePayerBase58)
+}
+
+func init() {
+	IPFS_SHELL = shell.NewShell("ipfs:5001")
 }
 
 // discord session

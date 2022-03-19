@@ -3,15 +3,7 @@ package main
 import (
 	"log"
 	"strings"
-
-	shell "github.com/ipfs/go-ipfs-api"
 )
-
-var ipfsShell *shell.Shell
-
-func init() {
-	ipfsShell = shell.NewShell("localhost:5001")
-}
 
 // Feature: 画像をIPFSにあげるかどうかは未定
 //func uploadImage2ipfs(imageURL string) (imageCID string) {
@@ -32,7 +24,7 @@ func init() {
 //}
 
 func uploadJson2ipfs(imageURI string) (jsonCID string) {
-	jsonCID, err := ipfsShell.Add(
+	jsonCID, err := IPFS_SHELL.Add(
 		strings.NewReader(
 			"{" +
 				"\n  \"name\": \"Super Test NFT\"," +
