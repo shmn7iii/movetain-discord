@@ -1,26 +1,35 @@
-# solana-go-sample
-Solana no devnet de token wo mint suru discord bot.
+# movetain-discord
+Movetain kun no Dicord BOT version. Solana no test no tameni tukutta yo. 
 
 ## usage
-```bash
-$ go build
-$ ./solana-go-sample -feepayer xxx -token yyy -guild zzz
+
+First, set `secrets/keys.json`
+
+```json
+{
+  "botToken": "<Discord BOT Token>",
+  "guildId": "<Discord Guild ID>",
+  "feePayerBase58": "<Base58 of FeePayer's keypair>"
+}
 ```
 
-- -feepayer  
-    FeePayer's base58
-- -token  
-    Discord BOT's token
-- -guild  
-    Guild ID for guild commands
+Then,
 
+```bash
+$ go build -o bin/main
+$ ./bin/main
+```
 
 ## about
 
 0. You need host IPFS Node.
 1. On Discord, type this.
-    ```
+   ```
    /mint imageURL:<image url>
+   ```
+   
+   ```
+   /memo content:<memo content>
    ```
 2. Then, BOT uploads JSON which include image URL to IPFS.
 3. BOT mints a NFT.
